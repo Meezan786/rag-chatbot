@@ -18,6 +18,21 @@ RAG stands for **Retrieval-Augmented Generation**. Here's what that means in sim
 
 It's like this: You ask a question → AI searches your documents → AI uses what it found to give you a smart answer.
 
+## Our Hybrid Architecture
+
+Your chatbot uses a **smart combination** of two powerful frameworks:
+
+### 🤖 OpenAI SDK (Agent Framework)
+- Handles the AI "brain" and conversations
+- Manages function calling (tools)
+- Uses Chat Completions API for intelligent responses
+
+### 🔗 LangChain (Document Processing)
+- Processes and chunks your PDF documents
+- Creates embeddings (math fingerprints)
+- Manages the vector database
+- Handles text splitting and search
+
 ## Project Overview
 
 Your chatbot has these main parts:
@@ -30,58 +45,67 @@ Your chatbot has these main parts:
 ## Architecture: How Everything Connects
 
 ```
-[Your PDFs] → [Document Processor] → [Vector Database]
+[Your PDFs] → [LangChain Processor] → [Vector Database]
       ↓              ↓                      ↓
-   [Web Chat] → [AI Agent] → [Smart Search] → [Answer Generator]
+   [Web Chat] → [OpenAI Agent] → [Smart Search] → [AI Response]
 ```
 
 Let me explain each part:
 
-### 1. Document Processor (fn_ingest.py)
+### 1. LangChain Document Processor (fn_ingest.py)
 This is like a librarian who organizes books. It:
-- Reads your PDF files
-- Breaks them into small chunks (like paragraphs)
-- Creates "fingerprints" for each chunk (called vectors)
-- Stores everything in a database
+- Reads your PDF files using LangChain's PDF loader
+- Breaks them into small chunks using LangChain's text splitter
+- Creates "fingerprints" (embeddings) for each chunk using OpenAI
+- Stores everything in ChromaDB vector database
 
 **Simple Code Example:**
 ```python
 # This code reads a PDF and breaks it into pieces
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 def process_pdf(file_path):
-    # Open the PDF file
-    pdf = open_pdf(file_path)
+    # Open the PDF file with LangChain
+    loader = PyPDFLoader(file_path)
+    docs = loader.load()
     
-    # Read all the text
-    text = extract_text_from_pdf(pdf)
-    
-    # Break into small pieces (chunks)
-    chunks = split_text_into_chunks(text)
+    # Break into small pieces (chunks) with LangChain
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    chunks = splitter.split_documents(docs)
     
     return chunks
 ```
 
 ### 2. Vector Database (ChromaDB)
-This is like a super-smart filing cabinet. It doesn't store words - it stores "vectors" (math fingerprints) of your text. When you search, it finds the closest matches.
+This is like a super-smart filing cabinet. It doesn't store words - it stores "vectors" (math fingerprints) of your text created by LangChain. When you search, it finds the closest matches.
 
 **Why vectors?** Because computers understand numbers better than words!
 
-### 3. AI Agent (agent_config.py)
-This is the "boss" of your chatbot. It:
-- Knows what tools it can use
+### 3. OpenAI Agent (agent_config.py)
+This is the "boss" of your chatbot using OpenAI SDK. It:
+- Knows what tools it can use (function calling)
 - Decides when to search documents
-- Tells the AI what to do
+- Tells OpenAI's GPT-4o what to do
+- Uses Chat Completions API instead of old Assistants API
 
 **Simple Code Example:**
 ```python
-# The agent knows these tools:
+# The agent knows these tools (OpenAI function calling)
 tools = [
-    "search_documents",  # Find info in PDFs
-    "answer_questions"   # Create smart answers
+    {
+        "type": "function",
+        "function": {
+            "name": "search_documents",
+            "description": "Find info in PDFs"
+        }
+    }
 ]
 
 # When you ask a question, the agent:
-# 1. Searches your documents
-# 2. Uses what it found to answer
+# 1. Uses OpenAI SDK to understand your question
+# 2. Calls functions to search documents
+# 3. Gets smart answers from GPT-4o
 ```
 
 ### 4. Web Interface (ui/app.py)
@@ -169,8 +193,8 @@ Answer appears in chat window
 
 Your project uses these helpful tools:
 
-- **OpenAI GPT-4o**: The smart AI brain
-- **LangChain**: Helps organize document processing
+- **OpenAI SDK**: The smart AI brain and agent framework (handles chat and function calling)
+- **LangChain**: Helps organize document processing, text splitting, and embeddings
 - **ChromaDB**: Stores and searches vectors
 - **Streamlit**: Creates the web interface
 - **PyPDF2**: Reads PDF files

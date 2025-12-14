@@ -83,36 +83,43 @@
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Query    │───▶│  Chat Interface │───▶│  LLM Processing │
-│                 │    │   (Streamlit)   │    │  (OpenAI GPT)   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │                        │
-                                ▼                        ▼
+│   User Query    │───▶│  Chat Interface │───▶│ OpenAI SDK Agent│
+│                 │    │   (Streamlit)   │    │ (Chat Completions│
+└─────────────────┘    └─────────────────┘    │     API)        │
+                                │            └─────────────────┘
+                                ▼                        │
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Document Store  │◀───│  Vector Search  │◀───│  Embedding Gen  │
-│    (ChromaDB)   │    │   (Similarity)  │    │   (OpenAI)      │
+│ Document Store  │◀───│ LangChain Vector│◀───│ LangChain Embed │
+│    (ChromaDB)   │    │     Search      │    │   Generation    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                                 ▲                        ▲
                                 │                        │
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   PDF Parser    │───▶│  Text Chunker   │───▶│  Document Q&A   │
-│    (PyPDF)      │    │   (LangChain)   │    │    (RAG)        │
+│   PDF Parser    │───▶│ LangChain Text  │───▶│  Document Q&A   │
+│    (PyPDF)      │    │   Chunker       │    │    (RAG)        │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
+### Hybrid Framework Approach
+
+This project uses a **best-of-both-worlds** architecture:
+
+- **🤖 OpenAI SDK**: Powers the intelligent agent framework with function calling and Chat Completions API
+- **🔗 LangChain**: Handles document processing, text chunking, embeddings, and vector database operations
+
 ### Data Flow
 
-1. **Document Ingestion**: PDFs → Text extraction → Chunking → Embeddings → Vector DB
-2. **Query Processing**: User question → Vector search → Context retrieval → LLM generation
-3. **Response Generation**: Retrieved chunks + question → AI reasoning → Contextual answer
+1. **Document Ingestion**: PDFs → LangChain PDF loader → Text chunking → OpenAI embeddings → ChromaDB storage
+2. **Query Processing**: User question → OpenAI agent → Function calls → LangChain vector search → Context retrieval
+3. **Response Generation**: Retrieved chunks + question → OpenAI GPT-4o reasoning → Contextual answer
 
 ### Key Components
 
-- **Agent Core**: Orchestrates the RAG pipeline and tool execution
-- **Document Tools**: `fn_ingest` for indexing, `fn_retrieve` for search
-- **Vector Store**: ChromaDB for efficient similarity search
+- **OpenAI Agent**: Uses Chat Completions API with function calling for intelligent orchestration
+- **LangChain Tools**: `fn_ingest` for document indexing, `fn_retrieve` for similarity search
+- **Vector Store**: ChromaDB for efficient vector similarity search
 - **Web Interface**: Streamlit for user interaction
-- **LLM Integration**: OpenAI GPT-4o for intelligent responses
+- **Document Processing**: LangChain ecosystem for PDF parsing and text processing
 
 > 📚 **Beginner Guide**: For a simple explanation of how everything works with code examples, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -243,21 +250,29 @@ rag-chatbot/
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
+| **Agent Framework** | OpenAI SDK (Chat Completions API) | Intelligent agent orchestration & function calling |
 | **AI Model** | OpenAI GPT-4o | Natural language processing & generation |
-| **Embeddings** | OpenAI text-embedding-ada-002 | Text vectorization |
-| **Vector DB** | ChromaDB | Similarity search & storage |
-| **Document Processing** | PyPDF, LangChain | PDF parsing & text chunking |
+| **Document Processing** | LangChain | PDF parsing, text chunking & embeddings |
+| **Embeddings** | OpenAI text-embedding-ada-002 (via LangChain) | Text vectorization |
+| **Vector DB** | ChromaDB (via LangChain) | Similarity search & storage |
 | **Web Framework** | Streamlit | Interactive user interface |
 | **Language** | Python 3.8+ | Core programming language |
 | **Environment** | python-dotenv | Configuration management |
 
+### Hybrid Architecture Benefits
+
+- **🤖 OpenAI SDK**: Modern, direct API access with function calling for agent behavior
+- **🔗 LangChain**: Battle-tested document processing and vector operations
+- **Best of Both**: Combines OpenAI's latest API capabilities with LangChain's robust document handling
+
 ### Dependencies
 
-- **Core AI**: `openai`, `langchain-openai`
-- **Document Processing**: `pypdf`, `langchain-community`
-- **Vector Operations**: `chromadb`, `langchain-text-splitters`
+- **Agent Framework**: `openai` (SDK for Chat Completions & function calling)
+- **Document Processing**: `langchain`, `langchain-community`, `langchain-openai`, `langchain-text-splitters`
+- **Vector Operations**: `chromadb`
+- **PDF Processing**: `pypdf`
 - **Web Interface**: `streamlit`
-- **Utilities**: `python-dotenv`, `fpdf2`
+- **Utilities**: `python-dotenv`
 
 ---
 
