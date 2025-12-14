@@ -114,6 +114,8 @@
 - **Web Interface**: Streamlit for user interaction
 - **LLM Integration**: OpenAI GPT-4o for intelligent responses
 
+> 📚 **Beginner Guide**: For a simple explanation of how everything works with code examples, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ---
 
 ## 🛠️ Installation
